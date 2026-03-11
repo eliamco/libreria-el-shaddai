@@ -5,7 +5,12 @@ const params = new URLSearchParams(window.location.search);
 const idLibro = params.get("id");
 const telefono = "50230996688";
 
-/* ---------- FUNCIONES CSV ---------- */
+const botonMenuMovil = document.getElementById("botonMenuMovil");
+const menuLinks = document.getElementById("menuLinks");
+
+/* =========================
+   FUNCIONES BASE
+========================= */
 
 function parseCSV(linea) {
   return linea.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
@@ -31,8 +36,6 @@ function tieneTexto(valor) {
   return typeof valor === "string" && valor.trim() !== "";
 }
 
-/* ---------- CONVERTIR LINK DE DRIVE ---------- */
-
 function convertirLinkDrive(urlImagen) {
   if (!tieneTexto(urlImagen)) return "";
 
@@ -45,11 +48,61 @@ function convertirLinkDrive(urlImagen) {
   if (!match) return limpio;
 
   const fileId = match[1];
-
   return `https://drive.google.com/thumbnail?id=${fileId}&sz=w2000`;
 }
 
-/* ---------- CAMBIAR IMAGEN PRINCIPAL ---------- */
+/* =========================
+   MENÚ MÓVIL
+========================= */
+
+function cerrarMenuMovil() {
+  if (!menuLinks || !botonMenuMovil) return;
+  menuLinks.classList.remove("abierto");
+  botonMenuMovil.innerHTML = "☰";
+}
+
+function abrirMenuMovil() {
+  if (!menuLinks || !botonMenuMovil) return;
+  menuLinks.classList.add("abierto");
+  botonMenuMovil.innerHTML = "✕";
+}
+
+if (botonMenuMovil && menuLinks) {
+  botonMenuMovil.addEventListener("click", (e) => {
+    e.stopPropagation();
+
+    if (menuLinks.classList.contains("abierto")) {
+      cerrarMenuMovil();
+    } else {
+      abrirMenuMovil();
+    }
+  });
+
+  const enlacesMenu = menuLinks.querySelectorAll("a");
+  enlacesMenu.forEach((enlace) => {
+    enlace.addEventListener("click", () => {
+      cerrarMenuMovil();
+    });
+  });
+
+  document.addEventListener("click", (e) => {
+    if (window.innerWidth <= 600 && menuLinks.classList.contains("abierto")) {
+      if (!e.target.closest(".menuCategorias")) {
+        cerrarMenuMovil();
+      }
+    }
+  });
+
+  window.addEventListener("resize", () => {
+    if (window.innerWidth > 600) {
+      cerrarMenuMovil();
+    }
+  });
+}
+
+/* =========================
+   CAMBIO DE IMAGEN
+========================= */
 
 function cambiarImagen(src, thumb) {
   const imagenPrincipal = document.getElementById("imagenPrincipalLibro");
@@ -66,72 +119,9 @@ function cambiarImagen(src, thumb) {
   }
 }
 
-/* ---------- CARGAR DATOS ---------- */
-
-fetch(url)
-  .then(res => res.text())
-  .then(data => {
-    const filas = data.split("\n").slice(1);
-
-    const libros = filas
-      .map(fila => {
-        const c = parseCSV(fila);
-
-        return {
-          id: limpiar(c[0]),
-          titulo: limpiar(c[1]),
-          autor: limpiar(c[2]),
-          editorial: limpiar(c[3]),
-          categoria: limpiar(c[4]),
-          precio: limpiar(c[5]),
-          stock: Number(limpiar(c[6])),
-          imagen: limpiar(c[8]),
-          descripcion: limpiar(c[9]),
-          imagen2: limpiar(c[10]),
-          imagen3: limpiar(c[11]),
-          isbn: limpiar(c[12]),
-          dimensiones: limpiar(c[13]),
-          peso: limpiar(c[14]),
-          cubierta: limpiar(c[15]),
-          paginas: limpiar(c[16]),
-          idioma: limpiar(c[17]),
-          version: limpiar(c[18]),
-          tipoBiblia: limpiar(c[19]),
-          tamanoBiblia: limpiar(c[20]),
-          caracteristicas: limpiar(c[21]),
-          tipoImpresion: limpiar(c[22]),
-          descripcionLarga: limpiar(c[23]),
-          sobreAutor: limpiar(c[24])
-        };
-      })
-      .filter(libro => libro.titulo !== "");
-
-    const libro = libros.find(l => l.id === idLibro);
-
-    if (!libro) {
-      contenedor.innerHTML = `
-        <div class="libroNoEncontrado">
-          <h2>Libro no encontrado</h2>
-          <p>No pudimos encontrar ese producto en el catálogo.</p>
-          <a href="index.html" class="botonVolverInterno">Volver al catálogo</a>
-        </div>
-      `;
-      return;
-    }
-
-    mostrarLibro(libro);
-    mostrarRelacionados(libros, libro);
-  })
-  .catch(() => {
-    contenedor.innerHTML = `
-      <div class="libroNoEncontrado">
-        <h2>Error al cargar</h2>
-        <p>No se pudieron obtener los datos del catálogo.</p>
-      </div>
-    `;
-  });
-
-/* ---------- ARMAR DETALLES TÉCNICOS ---------- */
+/* =========================
+   BLOQUES
+========================= */
 
 function construirDetallesTecnicos(libro, disponible) {
   const detalles = [
@@ -162,8 +152,6 @@ function construirDetallesTecnicos(libro, disponible) {
     .join("");
 }
 
-/* ---------- BLOQUES EXTRA ---------- */
-
 function construirBloqueInfo(titulo, contenido) {
   if (!tieneTexto(contenido)) return "";
 
@@ -177,7 +165,9 @@ function construirBloqueInfo(titulo, contenido) {
   `;
 }
 
-/* ---------- MOSTRAR LIBRO ---------- */
+/* =========================
+   MOSTRAR LIBRO
+========================= */
 
 function mostrarLibro(libro) {
   const disponible = libro.stock > 0;
@@ -262,16 +252,14 @@ function mostrarLibro(libro) {
         </div>
 
         <div class="precioEstadoWrap">
+          <p class="detallePrecioNuevo">
+            ${Number(libro.precio) > 0
+              ? `<span class="moneda">GTQ</span><span class="numeroPrecio">${formatoPrecio(libro.precio)}</span>`
+              : `<span class="moneda">Consultar</span>`
+            }
+          </p>
 
-        <p class="detallePrecioNuevo">
-        ${Number(libro.precio) > 0
-          ? `<span class="moneda">GTQ</span><span class="numeroPrecio">${formatoPrecio(libro.precio)}</span>`
-          : `<span class="moneda">Consultar</span>`
-        }
-        </p>
-
-        ${estado}
-
+          ${estado}
         </div>
 
         <div class="cajaEnvio">
@@ -346,25 +334,11 @@ function mostrarLibro(libro) {
       >
     </a>
   `;
-
-  const imgPrincipal = document.getElementById("imagenPrincipalLibro");
-
-  if (imgPrincipal) {
-    imgPrincipal.onload = function () {
-      console.log("src:", this.src);
-      console.log("naturalWidth:", this.naturalWidth);
-      console.log("naturalHeight:", this.naturalHeight);
-      console.log("clientWidth:", this.clientWidth);
-      console.log("clientHeight:", this.clientHeight);
-    };
-
-    imgPrincipal.onerror = function () {
-      console.log("Error al cargar la imagen principal:", this.src);
-    };
-  }
 }
 
-/* ---------- LIBROS RELACIONADOS ---------- */
+/* =========================
+   RELACIONADOS
+========================= */
 
 function mostrarRelacionados(libros, libro) {
   const relacionados = libros
@@ -417,17 +391,69 @@ function mostrarRelacionados(libros, libro) {
   contenedor.innerHTML += html;
 }
 
-const botonMenuMovil = document.getElementById("botonMenuMovil");
-const menuLinks = document.getElementById("menuLinks");
+/* =========================
+   CARGA
+========================= */
 
-if(botonMenuMovil && menuLinks){
-  botonMenuMovil.addEventListener("click", () => {
-    menuLinks.classList.toggle("abierto");
+fetch(url)
+  .then(res => res.text())
+  .then(data => {
+    const filas = data.split("\n").slice(1);
 
-    if(menuLinks.classList.contains("abierto")){
-      botonMenuMovil.innerHTML = "✕";
-    }else{
-      botonMenuMovil.innerHTML = "☰";
+    const libros = filas
+      .map(fila => {
+        const c = parseCSV(fila);
+
+        return {
+          id: limpiar(c[0]),
+          titulo: limpiar(c[1]),
+          autor: limpiar(c[2]),
+          editorial: limpiar(c[3]),
+          categoria: limpiar(c[4]),
+          precio: limpiar(c[5]),
+          stock: Number(limpiar(c[6])),
+          imagen: limpiar(c[8]),
+          descripcion: limpiar(c[9]),
+          imagen2: limpiar(c[10]),
+          imagen3: limpiar(c[11]),
+          isbn: limpiar(c[12]),
+          dimensiones: limpiar(c[13]),
+          peso: limpiar(c[14]),
+          cubierta: limpiar(c[15]),
+          paginas: limpiar(c[16]),
+          idioma: limpiar(c[17]),
+          version: limpiar(c[18]),
+          tipoBiblia: limpiar(c[19]),
+          tamanoBiblia: limpiar(c[20]),
+          caracteristicas: limpiar(c[21]),
+          tipoImpresion: limpiar(c[22]),
+          descripcionLarga: limpiar(c[23]),
+          sobreAutor: limpiar(c[24])
+        };
+      })
+      .filter(libro => libro.titulo !== "");
+
+    const libro = libros.find(l => l.id === idLibro);
+
+    if (!libro) {
+      contenedor.innerHTML = `
+        <div class="libroNoEncontrado">
+          <h2>Libro no encontrado</h2>
+          <p>No pudimos encontrar ese producto en el catálogo.</p>
+          <a href="index.html" class="botonVolverInterno">Volver al catálogo</a>
+        </div>
+      `;
+      return;
     }
+
+    mostrarLibro(libro);
+    mostrarRelacionados(libros, libro);
+  })
+  .catch(() => {
+    contenedor.innerHTML = `
+      <div class="libroNoEncontrado">
+        <h2>Error al cargar</h2>
+        <p>No se pudieron obtener los datos del catálogo.</p>
+      </div>
+    `;
   });
-}

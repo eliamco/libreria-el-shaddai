@@ -24,9 +24,7 @@ function iniciarAnimaciones() {
         }
       });
     },
-    {
-      threshold: 0.15
-    }
+    { threshold: 0.15 }
   );
 
   elementos.forEach((elemento) => {
@@ -65,7 +63,7 @@ function iniciarScrollSuave() {
 }
 
 /* =========================
-   EFECTO EN MENÚ AL HACER SCROLL
+   EFECTO MENÚ AL HACER SCROLL
 ========================= */
 function iniciarEfectoMenu() {
   const menu = document.querySelector(".menuCategorias");
@@ -81,7 +79,7 @@ function iniciarEfectoMenu() {
 }
 
 /* =========================
-   EFECTO EN GALERÍA
+   EFECTO GALERÍA
 ========================= */
 function iniciarEfectoGaleria() {
   const imagenesGaleria = document.querySelectorAll(".itemGaleriaTrayectoria img");
@@ -104,25 +102,44 @@ function iniciarMenuMovil() {
 
   if (!botonMenuMovil || !menuLinks) return;
 
-  botonMenuMovil.addEventListener("click", () => {
-    menuLinks.classList.toggle("activo");
-    botonMenuMovil.classList.toggle("activo");
+  function cerrarMenu() {
+    menuLinks.classList.remove("abierto");
+    botonMenuMovil.innerHTML = "☰";
+  }
+
+  function abrirMenu() {
+    menuLinks.classList.add("abierto");
+    botonMenuMovil.innerHTML = "✕";
+  }
+
+  botonMenuMovil.addEventListener("click", (e) => {
+    e.stopPropagation();
+
+    if (menuLinks.classList.contains("abierto")) {
+      cerrarMenu();
+    } else {
+      abrirMenu();
+    }
   });
 
   const enlacesMenu = menuLinks.querySelectorAll("a");
-
   enlacesMenu.forEach((enlace) => {
     enlace.addEventListener("click", () => {
-      menuLinks.classList.remove("activo");
-      botonMenuMovil.classList.remove("activo");
+      cerrarMenu();
     });
   });
 
+  document.addEventListener("click", (e) => {
+    if (window.innerWidth <= 600 && menuLinks.classList.contains("abierto")) {
+      if (!e.target.closest(".menuCategorias")) {
+        cerrarMenu();
+      }
+    }
+  });
+
   window.addEventListener("resize", () => {
-    if (window.innerWidth > 768) {
-      menuLinks.classList.remove("activo");
-      botonMenuMovil.classList.remove("activo");
+    if (window.innerWidth > 600) {
+      cerrarMenu();
     }
   });
 }
-
