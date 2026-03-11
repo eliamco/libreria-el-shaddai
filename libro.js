@@ -353,35 +353,39 @@ function mostrarRelacionados(libros, libro) {
       <div class="relacionadosGrid">
   `;
 
-  relacionados.forEach(r => {
-    const estado = r.stock > 0
-      ? `<span class="estadoMini disponible">Disponible</span>`
-      : `<span class="estadoMini agotado">Agotado</span>`;
+relacionados.forEach(r => {
+  const estado = r.stock > 0
+    ? `<span class="estadoMini disponible">Disponible</span>`
+    : `<span class="estadoMini agotado">Agotado</span>`;
 
-    const imagenRelacionado = tieneTexto(r.imagen)
-      ? convertirLinkDrive(r.imagen)
-      : "https://via.placeholder.com/200x300?text=Sin+imagen";
+  const imagenRelacionado = tieneTexto(r.imagen)
+    ? convertirLinkDrive(r.imagen)
+    : "https://via.placeholder.com/200x300?text=Sin+imagen";
 
-    html += `
-      <a href="libro.html?id=${r.id}" class="relacionadoCard">
-        <div class="relacionadoImagenWrap">
-          <img
-            src="${imagenRelacionado}"
-            class="miniPortada"
-            alt="${r.titulo}"
-            loading="lazy"
-            decoding="async"
-          >
-        </div>
-        <div class="relacionadoInfo">
-          <p class="relacionadoTitulo">${r.titulo}</p>
-          <p class="relacionadoAutor">${r.autor || "Autor no especificado"}</p>
-          <p class="relacionadoPrecio">Q ${formatoPrecio(r.precio)}</p>
-          ${estado}
-        </div>
-      </a>
-    `;
-  });
+  const precioRelacionado = Number(r.precio) > 0
+    ? `<span class="moneda">GTQ</span><span class="numeroPrecio">${formatoPrecio(r.precio)}</span>`
+    : `<span class="moneda">Consultar</span>`;
+
+  html += `
+    <a href="libro.html?id=${r.id}" class="relacionadoCard">
+      <div class="relacionadoImagenWrap">
+        <img
+          src="${imagenRelacionado}"
+          class="miniPortada"
+          alt="${r.titulo}"
+          loading="lazy"
+          decoding="async"
+        >
+      </div>
+      <div class="relacionadoInfo">
+        <p class="relacionadoTitulo">${r.titulo}</p>
+        <p class="relacionadoAutor">${r.autor || "Autor no especificado"}</p>
+        <p class="relacionadoPrecio detallePrecioNuevo">${precioRelacionado}</p>
+        ${estado}
+      </div>
+    </a>
+  `;
+});
 
   html += `
       </div>
