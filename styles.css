@@ -576,7 +576,7 @@ img{
 
 #contadorResultados{
   max-width:1120px;
-  margin:12px auto 0 auto;
+  margin:35px auto 10px auto;
   padding:0 20px;
   text-align:left;
   font-size:13px;
@@ -2825,3 +2825,87 @@ img{
   display:none;
 }
 
+
+
+/* =========================
+   TESTIMONIOS
+========================= */
+
+.testimonios {
+  background: #f7f7f7;
+  padding: 40px 20px;
+  margin-top: 30px;
+  text-align: center;
+  border-top: 1px solid #e5e7eb;
+}
+
+.testimonios h2 {
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #1f3a5f;
+  margin-bottom: 30px;
+}
+
+/* CONTENEDOR */
+.contenedorTestimonios {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* TARJETA */
+.testimonio {
+  max-width: 300px;
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  font-family: 'Segoe UI', sans-serif;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* HOVER (queda pro) */
+.testimonio:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.08);
+}
+
+/* COMILLAS */
+.comillas {
+  font-size: 28px;
+  color: #f59e0b;
+  display: block;
+  margin-bottom: 4px;
+  line-height: 1;
+}
+
+/* TEXTO */
+.testimonio p {
+  margin-top: 0;
+  font-size: 0.9rem;
+  color: #4b5563;
+  line-height: 1.5;
+}
+
+/* AUTOR */
+.autor {
+  display: block;
+  margin-top: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1f3a5f;
+}
+
+.seoSoloGoogle {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

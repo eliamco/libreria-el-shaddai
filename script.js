@@ -10,6 +10,7 @@ const paginacion = document.getElementById("paginacion");
 const botonFiltro = document.getElementById("botonFiltro");
 const panelFiltros = document.getElementById("panelFiltros");
 const flechaFiltro = document.getElementById("flechaFiltro");
+const volverDesdeLibro = sessionStorage.getItem("volverDesdeLibro") === "true";
 
 const botonMenuMovil = document.getElementById("botonMenuMovil");
 const menuLinks = document.getElementById("menuLinks");
@@ -26,6 +27,8 @@ const librosPorPagina = 8;
 
 let slideActual = 0;
 let intervaloSlider;
+
+let restaurarScrollPendiente = false;
 
 /* =========================
    FUNCIONES GENERALES
@@ -100,6 +103,97 @@ function toggleMenuMovil() {
 }
 
 /* =========================
+   GUARDAR / RESTAURAR ESTADO
+========================= */
+
+function guardarEstadoCatalogo() {
+  sessionStorage.setItem("catalogoPaginaActual", paginaActual);
+  sessionStorage.setItem("catalogoScrollY", window.scrollY);
+  sessionStorage.setItem("catalogoBusqueda", buscador ? buscador.value : "");
+  sessionStorage.setItem("catalogoCategoria", filtroCategoria ? filtroCategoria.value : "todas");
+  sessionStorage.setItem("catalogoPrecio", filtroPrecio ? filtroPrecio.value : "");
+}
+
+function restaurarEstadoCatalogo() {
+  if (!volverDesdeLibro) {
+    sessionStorage.removeItem("catalogoPaginaActual");
+    sessionStorage.removeItem("catalogoScrollY");
+    sessionStorage.removeItem("catalogoBusqueda");
+    sessionStorage.removeItem("catalogoCategoria");
+    sessionStorage.removeItem("catalogoPrecio");
+    paginaActual = 1;
+    restaurarScrollPendiente = false;
+    return;
+  }
+
+  const busquedaGuardada = sessionStorage.getItem("catalogoBusqueda");
+  const categoriaGuardada = sessionStorage.getItem("catalogoCategoria");
+  const precioGuardado = sessionStorage.getItem("catalogoPrecio");
+  const paginaGuardada = parseInt(sessionStorage.getItem("catalogoPaginaActual"), 10);
+  const scrollGuardado = parseInt(sessionStorage.getItem("catalogoScrollY"), 10);
+
+  if (buscador && busquedaGuardada !== null) {
+    buscador.value = busquedaGuardada;
+  }
+
+  if (filtroCategoria && categoriaGuardada !== null) {
+    filtroCategoria.value = categoriaGuardada;
+  }
+
+  if (filtroPrecio && precioGuardado !== null && precioGuardado !== "") {
+    filtroPrecio.value = precioGuardado;
+    valorPrecio.textContent = `Q ${precioGuardado}`;
+  }
+
+  if (!isNaN(paginaGuardada) && paginaGuardada > 0) {
+    paginaActual = paginaGuardada;
+  } else {
+    paginaActual = 1;
+  }
+
+  if (!isNaN(scrollGuardado) && scrollGuardado >= 0) {
+    restaurarScrollPendiente = true;
+  }
+
+  sessionStorage.removeItem("volverDesdeLibro");
+}
+
+function aplicarFiltrosSinResetearPagina() {
+  const texto = buscador.value.toLowerCase().trim();
+  const categoria = filtroCategoria.value;
+  const precioMaximo = Number(filtroPrecio.value);
+
+  valorPrecio.textContent = `Q ${precioMaximo}`;
+
+  librosFiltrados = libros.filter(libro => {
+    const textoBusqueda = `${libro.titulo} ${libro.autor} ${libro.editorial}`.toLowerCase();
+
+    const coincideBusqueda = textoBusqueda.includes(texto);
+    const coincideCategoria = categoria === "todas" || libro.categoria === categoria;
+    const coincidePrecio = libro.precioNumero <= precioMaximo;
+
+    return coincideBusqueda && coincideCategoria && coincidePrecio;
+  });
+}
+
+function restaurarScrollSiHaceFalta() {
+  if (!restaurarScrollPendiente) return;
+
+  const scrollGuardado = parseInt(sessionStorage.getItem("catalogoScrollY"), 10);
+
+  if (!isNaN(scrollGuardado) && scrollGuardado >= 0) {
+    setTimeout(() => {
+      window.scrollTo({
+        top: scrollGuardado,
+        behavior: "auto"
+      });
+    }, 120);
+  }
+
+  restaurarScrollPendiente = false;
+}
+
+/* =========================
    CATEGORÍAS
 ========================= */
 
@@ -127,6 +221,12 @@ function cargarCategoriasDinamicas() {
 function mostrarPagina() {
   catalogo.innerHTML = "";
 
+  const totalPaginas = Math.ceil(librosFiltrados.length / librosPorPagina);
+
+  if (paginaActual > totalPaginas && totalPaginas > 0) {
+    paginaActual = totalPaginas;
+  }
+
   const inicio = (paginaActual - 1) * librosPorPagina;
   const fin = inicio + librosPorPagina;
   const paginaLibros = librosFiltrados.slice(inicio, fin);
@@ -153,28 +253,38 @@ function mostrarPagina() {
       ? `<span class="moneda">GTQ</span><span class="numeroPrecio">${libro.precioNumero}</span>`
       : `<span class="moneda">Consultar</span>`;
 
-    catalogo.innerHTML += `
-      <a href="libro.html?id=${libro.id}" class="libro">
-        <div class="contenedorPortada">
-          <img src="${libro.imagen}" alt="${libro.titulo}" class="portada" onerror="this.style.display='none'">
-        </div>
+    const enlaceLibro = document.createElement("a");
+    enlaceLibro.href = `libro.html?id=${libro.id}`;
+    enlaceLibro.className = "libro";
 
-        <h3>${libro.titulo}</h3>
-        <p class="autor">${libro.autor || ""}</p>
-        <p class="editorial">${libro.editorial || ""}</p>
+    enlaceLibro.addEventListener("click", () => {
+      guardarEstadoCatalogo();
+      sessionStorage.setItem("volverDesdeLibro", "true");
+    });
 
-        <p class="precio">
-          ${precioHTML}
-        </p>
+    enlaceLibro.innerHTML = `
+      <div class="contenedorPortada">
+        <img src="${libro.imagen}" alt="${libro.titulo}" class="portada" onerror="this.style.display='none'">
+      </div>
 
-        <div class="estadoWrapper">
-          ${estado}
-        </div>
-      </a>
+      <h3>${libro.titulo}</h3>
+      <p class="autor">${libro.autor || ""}</p>
+      <p class="editorial">${libro.editorial || ""}</p>
+
+      <p class="precio">
+        ${precioHTML}
+      </p>
+
+      <div class="estadoWrapper">
+        ${estado}
+      </div>
     `;
+
+    catalogo.appendChild(enlaceLibro);
   });
 
   crearPaginacion();
+  restaurarScrollSiHaceFalta();
 }
 
 function crearPaginacion() {
@@ -184,19 +294,38 @@ function crearPaginacion() {
 
   if (totalPaginas <= 1) return;
 
+  const maxPaginasVisibles = 4;
+
+  let inicio = paginaActual - 1;
+  let fin = paginaActual + 2;
+
+  if (paginaActual <= 2) {
+    inicio = 1;
+    fin = maxPaginasVisibles;
+  }
+
+  if (paginaActual >= totalPaginas - 1) {
+    fin = totalPaginas;
+    inicio = totalPaginas - maxPaginasVisibles + 1;
+  }
+
+  if (inicio < 1) inicio = 1;
+  if (fin > totalPaginas) fin = totalPaginas;
+
   const btnAnterior = document.createElement("button");
   btnAnterior.innerText = "«";
   btnAnterior.disabled = paginaActual === 1;
   btnAnterior.addEventListener("click", () => {
     if (paginaActual > 1) {
       paginaActual--;
+      guardarEstadoCatalogo();
       mostrarPagina();
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   });
   paginacion.appendChild(btnAnterior);
 
-  for (let i = 1; i <= totalPaginas; i++) {
+  for (let i = inicio; i <= fin; i++) {
     const btn = document.createElement("button");
     btn.innerText = i;
 
@@ -206,6 +335,7 @@ function crearPaginacion() {
 
     btn.addEventListener("click", () => {
       paginaActual = i;
+      guardarEstadoCatalogo();
       mostrarPagina();
       window.scrollTo({ top: 0, behavior: "smooth" });
     });
@@ -219,6 +349,7 @@ function crearPaginacion() {
   btnSiguiente.addEventListener("click", () => {
     if (paginaActual < totalPaginas) {
       paginaActual++;
+      guardarEstadoCatalogo();
       mostrarPagina();
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -248,6 +379,7 @@ function aplicarFiltros() {
   });
 
   paginaActual = 1;
+  guardarEstadoCatalogo();
   mostrarPagina();
 }
 
@@ -284,10 +416,15 @@ fetch(url)
 
     const precioMaximo = Math.max(...libros.map(libro => libro.precioNumero), 1000);
     filtroPrecio.max = Math.ceil(precioMaximo / 10) * 10;
-    filtroPrecio.value = filtroPrecio.max;
-    valorPrecio.textContent = `Q ${filtroPrecio.value}`;
 
-    librosFiltrados = [...libros];
+    restaurarEstadoCatalogo();
+
+    if (!sessionStorage.getItem("catalogoPrecio")) {
+      filtroPrecio.value = filtroPrecio.max;
+      valorPrecio.textContent = `Q ${filtroPrecio.value}`;
+    }
+
+    aplicarFiltrosSinResetearPagina();
     mostrarPagina();
   })
   .catch(error => {
