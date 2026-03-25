@@ -410,7 +410,10 @@ fetch(url)
           descripcion: limpiar(c[24])
         };
       })
-      .filter(libro => libro.titulo !== "");
+      .filter(libro => 
+  libro.titulo !== "" &&
+  libro.imagen !== ""
+  );
 
     cargarCategoriasDinamicas();
 
