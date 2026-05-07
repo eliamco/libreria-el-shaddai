@@ -178,16 +178,18 @@ function mostrarLibro(libro) {
 
   const linkLibro = window.location.href;
 
-  const mensaje = encodeURIComponent(
-  `Hola, quiero ordenar este libro:
+  const mensaje = `
+  Hola, me gustaría ordenar el siguiente libro:
 
-  📖 ${libro.titulo}
-  💵 GTQ ${formatoPrecio(libro.precio)}
+  ${libro.titulo}
 
-  🌐 ${linkLibro}`
-  );
-  
-  const whatsapp = `https://wa.me/${telefono}?text=${mensaje}`;
+  Precio: GTQ ${formatoPrecio(libro.precio)}
+
+  Link del producto:
+  ${linkLibro}
+  `;
+
+  const whatsapp = `https://wa.me/${telefono}?text=${encodeURIComponent(mensaje)}`;
 
   const imagenPrincipal = tieneTexto(libro.imagen)
     ? convertirLinkDrive(libro.imagen)
