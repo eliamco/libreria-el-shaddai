@@ -176,7 +176,17 @@ function mostrarLibro(libro) {
     ? `<span class="estadoLibro disponible">● Disponible</span>`
     : `<span class="estadoLibro agotado">● Agotado</span>`;
 
-  const mensaje = encodeURIComponent(`Hola, quiero ordenar el libro: ${libro.titulo}`);
+  const linkLibro = window.location.href;
+
+  const mensaje = encodeURIComponent(
+  `Hola, quiero ordenar este libro:
+
+  📖 ${libro.titulo}
+  💵 GTQ ${formatoPrecio(libro.precio)}
+
+  🌐 ${linkLibro}`
+  );
+  
   const whatsapp = `https://wa.me/${telefono}?text=${mensaje}`;
 
   const imagenPrincipal = tieneTexto(libro.imagen)
